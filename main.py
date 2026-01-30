@@ -2,6 +2,9 @@ from exif import Image
 from datetime import datetime
 import cv2
 import math
+from astro_pi_orbit import ISS
+from picamzero import Camera
+
 
 
 def get_time(image):
@@ -35,8 +38,10 @@ def calculate_matches(descriptors_1, descriptors_2):
     matches = sorted(matches, key=lambda x: x.distance)
     return matches
 
-image_1 = 'images/before.jpg'
-image_2 = 'images/after.jpg'
+#image_1 = 'images/before.jpg'
+#image_2 = 'images/after.jpg'
+image_1 = 'sequence1.jpg'
+image_2 = 'sequence2.jpg'
 
 def display_matches(image_1_cv, keypoints_1, image_2_cv, keypoints_2, matches):
     match_img = cv2.drawMatches(image_1_cv, keypoints_1, image_2_cv, keypoints_2, matches[:100], None)
@@ -85,6 +90,19 @@ coordinates_1, coordinates_2 = find_matching_coordinates(keypoints_1, keypoints_
 average_feature_distance = calculate_mean_distance(coordinates_1, coordinates_2)
 speed = calculate_speed_in_kmps(average_feature_distance, 12648, time_difference)
 print(speed)
+
+cam = Camera()
+
+cam.capture_sequence("sequence", num_images=2, interval=3) 
+
+iss = ISS()
+
+def get_gps_coordinates(iss):
+    point = iss.coordinates()
+    return (point.latitude.signed_dms(), point.longitude.signed_dms())
+
+cam = Camera()
+cam.take_photo("gps_image1.jpg", gps_coordinates=get_gps_coordinates(iss))
 
 # Format the estimate_kmps to have a precision
 # of 5 significant figures
