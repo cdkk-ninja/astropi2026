@@ -83,9 +83,22 @@ matches = calculate_matches(descriptors_1, descriptors_2) # Match descriptors
 #display_matches(image_1_cv, keypoints_1, image_2_cv, keypoints_2, matches)
 coordinates_1, coordinates_2 = find_matching_coordinates(keypoints_1, keypoints_2, matches)
 average_feature_distance = calculate_mean_distance(coordinates_1, coordinates_2)
-print(average_feature_distance)
 speed = calculate_speed_in_kmps(average_feature_distance, 12648, time_difference)
 print(speed)
+
+# Format the estimate_kmps to have a precision
+# of 5 significant figures
+estimate_kmps_formatted = "{:.4f}".format(speed)
+
+# Create a string to write to the file
+output_string = estimate_kmps_formatted
+
+# Write to the file
+file_path = "result.txt"  # Replace with your desired file path
+with open(file_path, 'w') as file:
+    file.write(output_string)
+
+print("Data written to", file_path)
 
 
 
