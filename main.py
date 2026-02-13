@@ -5,6 +5,7 @@ import math
 from astro_pi_orbit import ISS
 from logzero import logger
 from picamzero import Camera
+from time import sleep
 
 
 logger.info("starting")
@@ -17,12 +18,13 @@ def get_gps_coordinates(iss):
     return (point.latitude.signed_dms(), point.longitude.signed_dms())
 
 
-cam.capture_sequence("sequence", num_images=7, interval=12) 
-# cam.take_photo("gps_image1.jpg", gps_coordinates=get_gps_coordinates(iss))
+##cam.capture_sequence("sequence", num_images=9, interval=20) 
+##cam.take_photo("gps_image1.jpg", gps_coordinates=get_gps_coordinates(iss))
 
-
-image_1 = 'sequence-5.jpg'
-image_2 = 'sequence-6.jpg'
+for i in range (20):
+    file_name = f'sequence-{i:04d}'
+    cam.take_photo(file_name)
+    sleep (10)
 
 def get_time(image):
     with open(image, 'rb') as image_file:
@@ -37,6 +39,9 @@ def get_time_difference(image_1, image_2):
     time_2 = get_time(image_2)
     time_difference = time_2 - time_1
     return time_difference.seconds
+
+print(get_time_difference)
+
 
 def convert_to_cv(image_1, image_2):
     image_1_cv = cv2.imread(image_1, 0)
@@ -85,15 +90,33 @@ def calculate_speed_in_kmps(feature_distance, GSD, time_difference):
 
 
 #analyze images ---
-time_difference = get_time_difference(image_1, image_2)
-image_1_cv, image_2_cv = convert_to_cv(image_1, image_2)
-keypoints_1, keypoints_2, descriptors_1, descriptors_2 = calculate_features(image_1_cv, image_2_cv, 1000)
-matches = calculate_matches(descriptors_1, descriptors_2)
-coordinates_1, coordinates_2 = find_matching_coordinates(keypoints_1, keypoints_2, matches)
-average_feature_distance = calculate_mean_distance(coordinates_1, coordinates_2)
-speed = calculate_speed_in_kmps(average_feature_distance, 12648, time_difference)
+def analyse_images(image_1, image_2):
+    time_difference = get_time_difference(image_1, image_2)
+    image_1_cv, image_2_cv = convert_to_cv(image_1, image_2)
+    keypoints_1, keypoints_2, descriptors_1, descriptors_2 = calculate_features(image_1_cv, image_2_cv, 1000)
+    matches = calculate_matches(descriptors_1, descriptors_2)
+    coordinates_1, coordinates_2 = find_matching_coordinates(keypoints_1, keypoints_2, matches)
+    average_feature_distance = calculate_mean_distance(coordinates_1, coordinates_2)
+    speed = calculate_speed_in_kmps(average_feature_distance, 12648, time_difference)
+    logger.info (f'speed = {speed}')
+    logger.info (f'image_1 = {image_1}')
+    logger.info (f'image_2 = {image_2}')
+    logger.info('-----')
+    logger.info(f'time_difference = {time_difference}')
+    return speed
+
+
+
+speed1 = analyse_images('sequence-0004.jpg', 'sequence-0005.jpg')
+speed2 = analyse_images('sequence-0006.jpg', 'sequence-0007.jpg')
+speed3 = analyse_images('sequence-0008.jpg', 'sequence-0009.jpg')
+speed4 = analyse_images('sequence-0002.jpg', 'sequence-0003.jpg')
+
+
+speed  = (speed1+speed2+speed3+speed4)/4
 
 print(speed)
+
 
 # --- Save results ---
 estimate_kmps_formatted = "{:.4f}".format(speed)
